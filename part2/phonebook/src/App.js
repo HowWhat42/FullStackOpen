@@ -43,7 +43,10 @@ const App = () => {
             setMessage(null)
         }, 5000)
       })
-      
+      .catch(error => {
+        setNotifType('error')
+        setMessage(error.response.data.error)
+      })
     }
   }
 
@@ -56,7 +59,7 @@ const App = () => {
       }).catch(() => {
         setNotifType('error')
         setMessage(
-          `Information of ${person.name} has already been removed from server`
+            `Information of ${person.name} has already been removed from server`
         )
       })
     }
@@ -81,11 +84,15 @@ const App = () => {
         setTimeout(() => {
             setMessage(null)
         }, 5000)
-      }).catch(() => {
+      }).catch((error) => {
         setNotifType('error')
-        setMessage(
-          `Information of ${person.name} has already been removed from server`
-        )
+        if(error) {
+          setMessage(error.response.data.error)
+        } else {
+          setMessage(
+            `Information of ${person.name} has already been removed from server`
+          )
+        }
       })
     }
   }
