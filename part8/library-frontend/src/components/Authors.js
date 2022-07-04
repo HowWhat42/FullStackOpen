@@ -2,13 +2,14 @@ import { useQuery } from '@apollo/client'
 import { ALL_AUTHORS } from '../queries'
 import EditAuthor from './EditAuthor'
 
-const Authors = (props) => {
+const Authors = ({ show, token }) => {
     const result = useQuery(ALL_AUTHORS)
+
     if (result.loading) {
         return <div>Loading...</div>
     }
 
-    if (!props.show) {
+    if (!show) {
         return null
     }
 
@@ -33,8 +34,12 @@ const Authors = (props) => {
                     ))}
                 </tbody>
             </table>
-            <h2>Set birthyear</h2>
-            <EditAuthor authors={authors} />
+            {token && (
+                <div>
+                    <h2>Set birthyear</h2>
+                    <EditAuthor authors={authors} />
+                </div>
+            )}
         </div>
     )
 }

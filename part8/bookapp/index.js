@@ -94,7 +94,7 @@ const resolvers = {
                     genres: { $elemMatch: { $eq: args.genre } },
                 }
             }
-            return Book.find(filter)
+            return await Book.find(filter).populate('author')
         },
         allAuthors: async () => Author.find({}),
         me: async (root, args, context) => {
@@ -106,26 +106,35 @@ const resolvers = {
         addBook: async (root, args, context) => {
             const currentUser = context.currentUser
             if (!currentUser) {
+                console.log('not authenticated')
                 throw new AuthenticationError('not authenticated')
             }
-            try {
-                let author = await Author.findOne({ name: args.author })
-                if (!author) {
-                    author = new Author({ name: args.author, id: uuidv4() })
-                    await author.save()
-                }
-                let book = new Book({ ...args, author: author.id, id: uuidv4() })
 
+            let author = await Author.findOne({ name: args.author })
+            console.log(author)
+            if (!author) {
+                author = new Author({ name: args.author, id: uuidv4() })
+                console.log(author)
+                try {
+                    await author.save()
+                } catch (error) {
+                    throw new UserInputError(error.message, { invalidArgs: args })
+                }
+            }
+
+            let book = new Book({ ...args, author: author.id, id: uuidv4() })
+            console.log(book)
+            try {
                 await book.save()
                 const bookCount = await Book.find({
                     author: author.id,
                 }).countDocuments()
                 await Author.findOneAndUpdate({ name: author.name }, { bookCount: bookCount })
                 book = await book.populate('author')
-                return book
             } catch (error) {
                 throw new UserInputError(error.message, { invalidArgs: args })
             }
+            return book
         },
         editAuthor: async (root, args, context) => {
             const currentUser = context.currentUser
