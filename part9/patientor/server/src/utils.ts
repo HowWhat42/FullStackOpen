@@ -1,4 +1,5 @@
-import { NewPatientEntry, Gender } from "./types";
+import { v1 as uuid } from 'uuid';
+import { NewPatientEntry, Gender, Entry, BaseEntry, HealthCheckRating } from "./types";
 
 const isString = (text: unknown): text is string => {
     return typeof text === 'string';
@@ -35,6 +36,25 @@ const parseGender = (gender: unknown): Gender => {
     return gender;
 };
 
+const isHealthCheckRating = (param: number): param is HealthCheckRating => {
+    return Object.values(HealthCheckRating).includes(param);
+};
+
+const parseHealthCheckRating = (rating: any): HealthCheckRating => {
+    const ratingValue: number = parseInt(rating);
+    if(!isHealthCheckRating(ratingValue)) {
+        throw new Error('Incorrect health check rating: ' + rating);
+    }
+    return ratingValue;
+};
+
+const parseArrayString = (array: unknown): string[] => {
+    if(!array || !Array.isArray(array)) {
+        throw new Error('Incorrect or missing array: ' + array);
+    }
+    return array.map(parseString);
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const toNewPatientEntry = (object: any): NewPatientEntry => {
     const newPatientEntry: NewPatientEntry = { 
@@ -47,4 +67,50 @@ const toNewPatientEntry = (object: any): NewPatientEntry => {
     return newPatientEntry;
 };
 
-export default toNewPatientEntry;
+const toNewEntry = (object: any): Entry => {
+    const baseEntry: BaseEntry = {
+        id: uuid(),
+        description: parseString(object.description),
+        date: parseDate(object.date),
+        specialist: parseString(object.specialist),
+        diagnosisCodes: parseArrayString(object.diagnosisCodes)
+    }
+    switch(object.type) {
+        case 'HealthCheck':
+            return {
+                ...baseEntry,
+                type: 'HealthCheck',
+                healthCheckRating: parseHealthCheckRating(object.healthCheckRating)
+            };
+        case 'OccupationalHealthcare':
+            let sickLeave: { startDate: string, endDate: string } | undefined;
+            if(object.sickLeave) {
+                sickLeave = {
+                    startDate: parseDate(object.sickLeave.startDate),
+                    endDate: parseDate(object.sickLeave.endDate)
+                };
+            }
+            return {
+                ...baseEntry,
+                type: 'OccupationalHealthcare',
+                employerName: parseString(object.employerName),
+                sickLeave
+            };
+        case 'Hospital':
+            return {
+                ...baseEntry,
+                type: 'Hospital',
+                discharge: {
+                    date: parseDate(object.discharge.date),
+                    criteria: parseString(object.discharge.criteria)
+                }
+            };
+        default:
+            throw new Error('Incorrect or missing entry type: ' + object.type);
+    }
+}
+
+export default {
+    toNewPatientEntry, 
+    toNewEntry
+};
