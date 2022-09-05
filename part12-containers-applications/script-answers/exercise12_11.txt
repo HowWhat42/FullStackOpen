@@ -1,0 +1,12 @@
+docker container ls
+docker exec -it todo-backend_redis_1 bash
+redis-cli
+KEYS *
+GET todoCount
+SET todoCount 9001
+GET todoCount
+DEL todoCount
+KEYS *
+GET todoCount
+exit
+exit

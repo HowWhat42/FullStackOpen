@@ -1,0 +1,4 @@
+docker start priceless_joliot --interactive
+apt update
+apt install -y nano
+nano /usr/src/app/index.js
